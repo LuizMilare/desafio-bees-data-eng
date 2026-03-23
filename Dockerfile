@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6. Comando padrão (vamos rodar a Silver para testar)
-CMD ["python", "scripts/transform_silver.py"]
+CMD ["python", "main.py"]
