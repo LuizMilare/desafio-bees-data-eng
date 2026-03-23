@@ -22,7 +22,7 @@ def process_silver():
 
     print("Escrevendo dados na camada Silver em Parquet particionando por 'country'...")
 
-    df_cleaned.write.mode("overwrite").parquet(output_path)
+    df_cleaned.write.partitionBy("country").mode("overwrite").parquet(output_path)
 
     print(f"Camada Silver concluída em: {output_path}")
 

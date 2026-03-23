@@ -15,7 +15,7 @@ def process_gold():
                        .orderBy("brewery_count", ascending=False)
 
     # Salvando na Gold
-    df_gold.write.mode("overwrite").parquet("data/gold/brewery_analytics")
+    df_gold.write.partitionBy("country").mode("overwrite").parquet("data/gold/brewery_analytics")
     
     print("Resultado da Camada Gold:")
     df_gold.show(10)
