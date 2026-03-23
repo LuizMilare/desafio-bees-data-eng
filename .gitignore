@@ -8,8 +8,8 @@ __pycache__/
 bin/
 
 #Dados
-data/*
-!data/.gitkeep
+data/**/*
+!data/**/.gitkeep
 
 # Spark/Hadoop
 .ipynb_checkpoints
