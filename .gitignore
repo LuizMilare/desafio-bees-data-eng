@@ -8,8 +8,10 @@ __pycache__/
 bin/
 
 #Dados
-data/**/*
-!data/**/.gitkeep
+data/bronze/*
+data/silver/*
+data/gold/*
+!**/.gitkeep
 
 # Spark/Hadoop
 .ipynb_checkpoints
