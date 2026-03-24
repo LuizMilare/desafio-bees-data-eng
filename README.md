@@ -131,14 +131,17 @@ git clone https://github.com/LuizMilare/desafio-bees-data-eng.git
 
 cd desafio-bees-data-eng
 ```
+2. **Set Environment Variables**
 
-2.  **Upload the infrastructure**
+* Rename .env_example file to .env
+* Set POSTGRES_USER=airflow; POSTGRES_PASSWORD=airflow; POSTGRES_DB=airflow; AIRFLOW_SECRET_KEY=any_key_you_like
+3.  **Upload the infrastructure**
 
 ```
 docker-compose up -d --build
 ```
 
-3.  **Access Airflow**
+4.  **Access Airflow**
 
 * Open browser in http://localhost:8080.
 
@@ -146,7 +149,7 @@ docker-compose up -d --build
 
   
 
-4.  **Execute Pipeline**
+5.  **Execute Pipeline**
 
 * Unpause the brewery_medallion_pipeline DAG to start extration, transformation and tests automatically.
 
@@ -154,7 +157,7 @@ docker-compose up -d --build
 
   
 
-5.  **Stop Application**
+6.  **Stop Application**
 
 ```
 docker-compose down -v
