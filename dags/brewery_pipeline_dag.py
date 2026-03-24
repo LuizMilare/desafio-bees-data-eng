@@ -3,6 +3,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import subprocess
 import sys
+from pytest import main as pytest_main
 
 # Importamos suas funções dos scripts ou rodamos como comandos de sistema
 def run_script(script_name):
@@ -14,6 +15,12 @@ def run_script(script_name):
 def on_failure_callback(context):
     print(f"Atenção! A Task: {context['task_instance_key_str']}, agendada para {context['execution_date']}, falhou.")
 
+def run_integration_tests():
+    exit_code = pytest_main(["-v", "/opt/airflow/tests/test_pipeline.py"])
+    if exit_code != 0:
+        raise Exception("Testes de integração falharam. Verifique os logs para mais detalhes.")
+
+
 default_args = {
     'owner': 'LuizMilare',
     'email': ['mail_teste@teste.com'], # Para que o email seja de fato enviado, é necesário configurar um servidor SMTP no docker-compose.yml.
@@ -21,7 +28,7 @@ default_args = {
     'start_date': datetime(2026, 3, 22),
     'email_on_failure': True,
     'email_on_retry': False,
-    'retries': 3,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
     'on_failure_callback': on_failure_callback
 }
@@ -53,5 +60,10 @@ with DAG(
         op_args=['transform_gold.py']
     )
 
+    task_tests = PythonOperator(
+        task_id='run_integration_tests',
+        python_callable=run_integration_tests
+    )
+
     # Definindo a ordem: Bronze -> Silver -> Gold
-    task_ingest >> task_silver >> task_gold
+    task_ingest >> task_silver >> task_gold >> task_tests
