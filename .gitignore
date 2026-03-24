@@ -12,6 +12,7 @@ data/bronze/*
 data/silver/*
 data/gold/*
 !**/.gitkeep
+logs/
 
 # Spark/Hadoop
 .ipynb_checkpoints
@@ -24,3 +25,6 @@ spark-warehouse/
 # IDEs
 .vscode/
 .idea/
+
+# Docker
+.docker/

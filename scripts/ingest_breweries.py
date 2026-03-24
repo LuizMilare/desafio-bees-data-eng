@@ -28,8 +28,8 @@ def fetch_breweries():
         if page > 1000:
             break
 
-    os.makedirs("data/bronze", exist_ok=True)
-    with open("data/bronze/breweries_raw.json", "w") as f:
+    os.makedirs("/app/data/bronze", exist_ok=True)
+    with open("/app/data/bronze/breweries_raw.json", "w") as f:
         json.dump(all_data, f, indent=4)
 
     print(f"Ingestão concluída com {len(all_data)} registros.")

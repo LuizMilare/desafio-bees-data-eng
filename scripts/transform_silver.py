@@ -11,14 +11,14 @@ def process_silver():
 
     print("Lendo dados da camada Bronze...")
     # 1. Ler o JSON da bronze
-    df = spark.read.option("multiline", "true").json("data/bronze/breweries_raw.json")
+    df = spark.read.option("multiline", "true").json("/app/data/bronze/breweries_raw.json")
 
     # 2. Transformações simples (data cleaning)
     # Garantindo que 'country' não seja nulo para o particionamento
     df_cleaned = df.withColumn("country", when(col("country").isNull(), "unknown").otherwise(col("country")))
 
     # 3. Escrita na Silver, particionados por país - Partição pode ser alterada futuramente para melhora de desempenho
-    output_path = "data/silver/breweries"
+    output_path = "/app/data/silver/breweries"
 
     print("Escrevendo dados na camada Silver em Parquet particionando por 'country'...")
 

@@ -7,7 +7,7 @@ def process_gold():
     spark = SparkSession.builder.appName("BreweryGold").config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem").getOrCreate()
     
     # Lendo da Silver
-    df_silver = spark.read.parquet("data/silver/breweries")
+    df_silver = spark.read.parquet("/app/data/silver/breweries")
     
     # Agregação final
     df_gold = df_silver.groupBy("brewery_type", "country", "state_province") \
@@ -15,7 +15,7 @@ def process_gold():
                        .orderBy("brewery_count", ascending=False)
 
     # Salvando na Gold
-    df_gold.write.partitionBy("country").mode("overwrite").parquet("data/gold/brewery_analytics")
+    df_gold.write.partitionBy("country").mode("overwrite").parquet("/app/data/gold/brewery_analytics")
     
     print("Resultado da Camada Gold:")
     df_gold.show(10)

@@ -1,20 +1,22 @@
-# 1. Imagem base super estável
-FROM python:3.11-slim
+FROM apache/airflow:2.7.1-python3.11
 
-# 2. Instala o Java (essencial para o PySpark rodar no Linux)
+USER root
+
+# Instala Java e Bash (essenciais para o Spark)
 RUN apt-get update && \
-    apt-get install -y default-jdk-headless && \
-    apt-get clean
+    apt-get install -y --no-install-recommends openjdk-17-jdk-headless bash && \
+    apt-get autoremove -yqq --purge && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# 3. Define a pasta de trabalho
-WORKDIR /app
+# Cria as pastas necessárias e garante que o usuário 'airflow' seja dono delas
+RUN mkdir -p /app/scripts /app/data /app/logs && \
+    chown -R airflow:root /app /opt/airflow
 
-# 4. Copia os requisitos e instala
-COPY requirements.txt .
+USER airflow
+
+# Instala as dependências Python
+COPY --chown=airflow:root requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copia todo o seu código para dentro do container
-COPY . .
-
-# 6. Comando padrão (vamos rodar a Silver para testar)
-CMD ["python", "main.py"]
+WORKDIR /opt/airflow
