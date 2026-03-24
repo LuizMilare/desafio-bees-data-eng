@@ -26,6 +26,7 @@ services:
       - ./scripts:/app/scripts
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./tests:/opt/airflow/tests
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
@@ -51,6 +52,7 @@ services:
       - ./scripts:/app/scripts
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./tests:/opt/airflow/tests
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
