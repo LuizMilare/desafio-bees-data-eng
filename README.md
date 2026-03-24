@@ -1,46 +1,161 @@
-# Brewery Data Pipeline (BEES Challenge)
-
-Este projeto implementa um pipeline de dados escalável utilizando a **Arquitetura Medalhão** para consumir, processar e organizar dados da [Open Brewery DB](https://www.openbrewerydb.org/).
+# BEES Data Engineering Case - Open Brewery DB API Pipeline
 
 
 
-## 🛠️ Tecnologias Utilizadas
+This project contains a scalable data pipeline to extract, transform and persist data from the **Open Brewery DB API** into a *Data Lake* using the *Medallion Architecture*
 
-* **Python 3.11**: Linguagem base para scripts de automação.
-* **Apache Spark (PySpark)**: Processamento distribuído para transformações de grande escala.
-* **Docker**: Conteinerização para garantir a portabilidade do ambiente (Windows/Linux/Mac).
-* **Parquet**: Formato de armazenamento colunar otimizado para leitura e compressão.
+  
+  
 
-## 🏗️ Arquitetura do Pipeline
+## Tools and Technologies
 
-O fluxo de dados segue os princípios de Engenharia de Dados moderna:
+*  **Languages:** Python and PySpark
 
-1.  **Bronze (Raw)**: Ingestão de dados brutos da API REST em formato JSON. Foco em persistência e garantia de histórico (Source of Truth).
-2.  **Silver (Cleaned)**: Limpeza de dados (tratamento de valores nulos, padronização de tipos) e **particionamento por localização (`country`)**. O uso de Parquet nesta camada reduz drasticamente o tempo de consulta.
-3.  **(TO-DO) Gold (Analytics)**: Agregação final pronta para consumo (ex: contagem de cervejarias por tipo e localidade), otimizada para ferramentas de BI.
+*  **Orchestration:** Apache Airflow
 
-## 🚀 Como Executar
+*  **Quality Tests:** Pytest
 
-### Pré-requisitos
-* Docker Desktop instalado e rodando.
+*  **Containerization:** Docker and Docker Compose
 
-### Execução via Docker (Recomendado)
-Para evitar conflitos de dependências locais (como Java ou Hadoop/Winutils no Windows), utilize o ambiente isolado:
+  
 
-1.  **Build da imagem:**
-    ```bash
-    docker build -t brewery-pipeline .
-    ```
+---
 
-2.  **Execução do pipeline:**
-    ```bash
-    docker run -v "${PWD}/data:/app/data" brewery-pipeline
-    ```
-    *(O comando acima mapeia a pasta `data` do seu host para o container, permitindo visualizar os arquivos gerados localmente).*
 
-## 📈 Decisões de Design & Diferenciais
+## Data Architecture
 
-* **Persistência em Parquet**: Escolhido pela eficiência de compressão e suporte a *Predicate Pushdown*, permitindo que o Spark leia apenas as fatias de dados necessárias.
-* **Particionamento Estratégico**: Os dados foram particionados por país na camada Silver. Isso evita o *Full Table Scan* em consultas geográficas, um padrão essencial em cenários de Big Data.
-* **Robustez no Windows**: Implementação de configurações customizadas de `SparkSession` (`RawLocalFileSystem`) para garantir a escrita de arquivos mesmo em ambientes sem Hadoop nativo.
-* **Idempotência**: O pipeline utiliza o modo `overwrite`, permitindo múltiplas execuções sem duplicidade ou corrupção de dados.
+  
+
+The *Data Lake* was structured in three layers, designed to ensure scalability and data quality:
+
+  
+
+### 1. Bronze Layer (Raw Data)
+
+*  **Goal:** Ingestion of data in its raw form.
+
+*  **Process:** Data is extracted from the API with pagination and persisted in `.json` format. This layer should work as the source of truth.
+
+  
+
+### 2. Silver Layer (Curated Data)
+
+*  **Goal:** Cleaning and optimization.
+
+*  **Transformations:** Conversion from `.json` to **Parquet** for columnar storage.
+
+*  **Partitioning:** Data was partitioned by location (`country`) to reduce Spark's I/O on regional queries..
+
+*  **Cleaning:** Treatment of null values for the `country` column.
+
+  
+
+### 3. Gold Layer (Aggregated Data)
+
+*  **Goal:** Provide analytics data for business.
+
+*  **Process:** Create aggregated view with **number of breweries by type and location**, ready to be used by BI tools or analytical reports.
+
+  
+
+---
+
+  
+
+## Data quality and Tests
+
+  
+
+To assure Data Quality, a suite of integration tests was implemented on **Pytest** acting directly on the Airflow DAG as a **Quality Gate**
+
+* The tests occur right after all tasks are completed. But can be adapted to execute after each task.
+
+*  **Tested Cases:** Existence of the bronze layer raw `.json` file; existence of data inside the `.json` file; existence of data within the silver layer; existence of main expected columns on the silver layer; existence of aggregation column on gold layer.
+
+* If any test case fails, the test task fails and triggers an error, but the data is still loaded to the Data Lake, since the test task is the last to be executed.
+
+  
+
+---
+
+  
+
+## Alerts and Monitoring
+
+  
+
+In a production environment, the *pipeline* could be monitored as follows:
+
+  
+
+1.  **Pipeline Failure Alerts (Airflow):**  `on_failure_callback` setting on Airflow DAG to notify the engineers immediately via Slack, Microsoft Teams or e-mail in case any task fails. In this pipeline, the `on_failure_callback` setting is active, but it doesn't notify any e-mail. To do this, a SMTP server should be setup.
+
+  
+
+2.  **Monitoring and Data Quality:** The current *Quality Gate* should act as a starting point. In a production environment, tools like *Great Expectations* could be used to validate data anomalies.
+
+  
+
+---
+
+  
+
+## Design Choices and Trade-offs
+
+  
+
+*  **PySpark vs Pandas:** The chosen data processing language was PySpark to demonstrate a *Big Data*-ready architecture. Although Pandas could be used for this particular case, PySpark works better at scale.
+
+*  **Local vs Cloud Storage:** Since it is not specified in the instructions, the *Data Lake* storage and processing was kept on local Docker volumes. In a real architecture, the storage could be migrated to cloud based solutions, such as AWS S3 and GCS, and the processing could be done in a databricks cluster.
+
+*  **Tests Within DAG:** The tests occur within the Airflow DAG instead of a CI/CD pipeline, assuring the data quality is assured on runtime.
+
+  
+
+---
+
+  
+
+## How to Run the project
+
+  
+
+**Pre-requisites:** Have [Docker](https://www.docker.com/) and Docker Compose installed, with enough RAM available.
+
+  
+
+1.  **Clone the repository:**
+
+```
+git clone https://github.com/LuizMilare/desafio-bees-data-eng.git
+
+cd desafio-bees-data-eng
+```
+
+2.  **Upload the infrastructure**
+
+```
+docker-compose up -d --build
+```
+
+3.  **Access Airflow**
+
+* Open browser in http://localhost:8080.
+
+* User: admin / Password: admin
+
+  
+
+4.  **Execute Pipeline**
+
+* Unpause the brewery_medallion_pipeline DAG to start extration, transformation and tests automatically.
+
+* Check if the data was indeed recorded in \data folder
+
+  
+
+5.  **Stop Application**
+
+```
+docker-compose down -v
+```
