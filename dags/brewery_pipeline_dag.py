@@ -11,12 +11,19 @@ def run_script(script_name):
         raise Exception(f"Erro no script {script_name}: {result.stderr}")
     print(result.stdout)
 
+def on_failure_callback(context):
+    print(f"Atenção! A Task: {context['task_instance_key_str']}, agendada para {context['execution_date']}, falhou.")
+
 default_args = {
     'owner': 'LuizMilare',
+    'email': ['mail_teste@teste.com'], # Para que o email seja de fato enviado, é necesário configurar um servidor SMTP no docker-compose.yml.
     'depends_on_past': False,
     'start_date': datetime(2026, 3, 22),
-    'retries': 1,
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 3,
     'retry_delay': timedelta(minutes=5),
+    'on_failure_callback': on_failure_callback
 }
 
 with DAG(
@@ -24,7 +31,8 @@ with DAG(
     default_args=default_args,
     description='Pipeline Medalhão para desafio DE BEES',
     schedule_interval='@daily',
-    catchup=False
+    catchup=False,
+    tags=['brewery', 'medallion', 'pipeline', "BEES"]
 ) as dag:
 
     task_ingest = PythonOperator(
