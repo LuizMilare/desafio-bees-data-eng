@@ -15,6 +15,8 @@ This project contains a scalable data pipeline to extract, transform and persist
 
 *  **Quality Tests:** Pytest
 
+*  **Monitoring:** Grafana
+
 *  **Containerization:** Docker and Docker Compose
 
   
@@ -26,7 +28,7 @@ This project contains a scalable data pipeline to extract, transform and persist
 
   
 
-The *Data Lake* was structured in three layers, designed to ensure scalability and data quality:
+The *Data Lake* was structured in three layers, designed to ensure scalability and data quality. These three layers are persisted in local volumes mapped by Docker. In a production environment, these paths should be switched to a Object Storage such as S3 or GCS:
 
   
 
@@ -77,7 +79,7 @@ To assure Data Quality, a suite of integration tests was implemented on **Pytest
 
   
 
-## Alerts and Monitoring
+## Alerts
 
   
 
@@ -95,6 +97,10 @@ In a production environment, the *pipeline* could be monitored as follows:
 
 ---
 
+## Automated Monitoring
+
+This project includes a **Grafana** instance with automated provisioning. The **PostgreSQL** datasource and the **Breweries Dashboard** are automatically provided upon startup, proviing real-time visibility into pipeline metrics and task durations.
+
   
 
 ## Design Choices and Trade-offs
@@ -102,6 +108,8 @@ In a production environment, the *pipeline* could be monitored as follows:
   
 
 *  **PySpark vs Pandas:** The chosen data processing language was PySpark to demonstrate a *Big Data*-ready architecture. Although Pandas could be used for this particular case, PySpark works better at scale.
+
+* **Embedded Spark vs Dedicated Cluster**: For this project, PySpark runs in Local Mode within the Airflow containers (enabled by Java 17 installation in the Dockerfile). This approach reduces infrastructure overhead and network latency for this data volume, while remaining 100% compatible with a migration to a dedicated Spark Cluster if needed.
 
 *  **Local vs Cloud Storage:** Since it is not specified in the instructions, the *Data Lake* storage and processing was kept on local Docker volumes. In a real architecture, the storage could be migrated to cloud based solutions, such as AWS S3 and GCS, and the processing could be done in a databricks cluster.
 
