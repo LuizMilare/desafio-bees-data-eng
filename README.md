@@ -121,24 +121,38 @@ In a production environment, the *pipeline* could be monitored as follows:
 
   
 
-1.  **Clone the repository:**
+
+1.  **For Windows users**
+
+* Make sure your IDE is using **LF** (Line Feed) instead of **CRLF** line endings. 
+* To accomplish this you can set `git config --global core.autocrlf false` before cloning. Or change your settings from CRLF to LF in your IDE's interface.
+
+
+2.  **Clone the repository:**
 
 ```
 git clone https://github.com/LuizMilare/desafio-bees-data-eng.git
 
 cd desafio-bees-data-eng
 ```
-2. **Set Environment Variables**
+3. **Set Environment Variables**
 
 * Rename .env_example file to .env
-* Set POSTGRES_USER=airflow; POSTGRES_PASSWORD=airflow; POSTGRES_DB=airflow; AIRFLOW_SECRET_KEY=any_key_you_like
-3.  **Upload the infrastructure**
+* Set 
+```
+POSTGRES_USER=airflow
+POSTGRES_PASSWORD=airflow
+POSTGRES_DB=airflow
+AIRFLOW_SECRET_KEY=any_key_you_like
+```
+
+4.  **Start the infrastructure**
 
 ```
 docker-compose up -d --build
 ```
 
-4.  **Access Airflow**
+5.  **Access Airflow**
 
 * Open browser in http://localhost:8080.
 
@@ -146,7 +160,7 @@ docker-compose up -d --build
 
   
 
-5.  **Execute Pipeline**
+6.  **Execute Pipeline**
 
 * Unpause the brewery_medallion_pipeline DAG to start extration, transformation and tests automatically.
 
@@ -154,7 +168,7 @@ docker-compose up -d --build
 
   
 
-6.  **Stop Application**
+7.  **Stop Application**
 
 ```
 docker-compose down -v
