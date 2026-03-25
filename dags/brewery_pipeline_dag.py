@@ -27,7 +27,7 @@ default_args = {
     'start_date': datetime(2026, 3, 22),
     'email_on_failure': True,
     'email_on_retry': False,
-    'retries': 0,
+    'retries': 3,
     'retry_delay': timedelta(minutes=5),
     'on_failure_callback': on_failure_callback
 }
