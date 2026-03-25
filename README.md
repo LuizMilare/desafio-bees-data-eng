@@ -36,7 +36,7 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 *  **Goal:** Ingestion of data in its raw form.
 
-*  **Process:** Data is extracted from the API with pagination and persisted in `.json` format. This layer should work as the source of truth.
+*  **Process:** Data is extracted from the API with pagination and persisted in `.json` format. The ingestion script uses retry logic and a defined timeout per request. Pages that fail are skipped and logged, and an error is raised to trigger Airflow alerts. This layer should work as the source of truth.
 
   
 
