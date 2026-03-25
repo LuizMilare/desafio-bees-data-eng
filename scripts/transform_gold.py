@@ -47,7 +47,7 @@ def process_gold(ingestion_date: str = None) -> None:
         GROUP BY brewery_type, country, state_province
         ORDER BY brewery_count DESC
         """
-    ).withColumn("ingestion_date", lit(ingestion_date).filter(col("ingestion_date") == ingestion_date)
+    ).withColumn("ingestion_date", lit(ingestion_date)).filter(col("ingestion_date") == ingestion_date)
 
     record_count = df_gold.count()
     logger.info(f"Gold transformation completed with {record_count} records.")
