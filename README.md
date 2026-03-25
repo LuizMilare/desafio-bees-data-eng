@@ -46,14 +46,14 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 *  **Transformations:** Define Schema. Deduplicate records by id. Treatment of null values for the `country` column. Conversion from `.json` to **Parquet** for columnar storage.
 
-*  **Partitioning:** Data was partitioned by location (`country`) to reduce Spark's I/O on regional queries.
+*  **Partitioning:** Data was partitioned by *location* and *ingestion_date* to ensure idempotency and auditability. The `country` partitioning reduces Spark's I/O for regional queries
   
 
 ### 3. Gold Layer (Aggregated Data)
 
 *  **Goal:** Provide analytics data for business.
 
-*  **Process:** Create aggregated view with **number of breweries by type and location**, ready to be used by BI tools or analytical reports.
+*  **Process:** Create aggregated view with **number of breweries by type and location** using Spark SQL, partitioned by *ingestion_date*, ready to be used by BI tools or analytical reports.
 
   
 

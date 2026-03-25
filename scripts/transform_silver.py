@@ -1,15 +1,38 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when
-from pyspark.sql.types import *
+from pyspark.sql.functions import col, count, when, lit
+from pyspark.sql.types import StructType, StructField, StringType
 import os
+import logging
+from datetime import datetime, timezone
 
-def process_silver():
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+INPUT_PATH = "/app/data/bronze/breweries_raw.json"
+OUTPUT_PATH = "/app/data/silver/breweries"
+
+def process_silver(ingestion_date: str = None) -> None:
+
+    if ingestion_date is None:
+        ingestion_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    logger.info(f"Starting transformation for ingestion_date={ingestion_date}")
+    
     os.environ['HADOOP_HOME'] = os.path.abspath(os.getcwd())
-    spark = SparkSession.builder.appName("BrewerySilver").config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem").config("spark.driver.host", "127.0.0.1").getOrCreate()
+    spark = (
+        SparkSession.builder
+        .appName("BrewerySilver")
+        .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem")
+        .config("spark.driver.host", "127.0.0.1")
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
+        .getOrCreate()
+    )
 
     spark.sparkContext.setLogLevel("ERROR")
 
-    print("Reading data from the Bronze layer...")
     # 1. Define Schema
     schema = StructType([
     StructField("id", StringType(), True),
@@ -29,24 +52,37 @@ def process_silver():
     StructField("state", StringType(), True),
     StructField("street", StringType(), True),
     ])
+
+    logger.info("Reading data from bronze layer..")
     
     # 2. Reading the JSON from the Bronze layer
-    df = spark.read.schema(schema).option("multiline", "true").json("/app/data/bronze/breweries_raw.json")
+    df = (
+        spark.read
+        .schema(schema)
+        .option("multiline", "true")
+        .json("/app/data/bronze/breweries_raw.json")
+    )
 
     # 3. Deduplicating
     df_deduped = df.dropDuplicates(["id"])
 
     # 4. Ensuring 'country' is not null for partitioning
-    df_cleaned = df_deduped.withColumn("country", when(col("country").isNull(), "unknown").otherwise(col("country")))
+    df_cleaned = df_deduped.withColumn(
+        "country",
+        when(col("country").isNull(), "unknown").otherwise(col("country")))
 
     # 5. Writing to Silver layer, partitioned by country - Partitioning can be changed in the future for performance improvements
     output_path = "/app/data/silver/breweries"
 
-    print("Writing data to the Silver layer in Parquet format, partitioned by 'country'...")
+    # 6. Add ingestion_date column for partitioning and future auditing
+    df_final = df_cleaned.withColumn("ingestion_date", lit(ingestion_date))
 
-    df_cleaned.write.partitionBy("country").mode("overwrite").parquet(output_path)
+    record_count = df_final.count()
+    logger.info(f"Transformation completed with {record_count} records.")
 
-    print(f"Silver layer completed at: {output_path}")
+    df_final.write.partitionBy("country", "ingestion_date").mode("overwrite").parquet(OUTPUT_PATH)
+
+    logger.info(f"Silver layer completed at: {output_path}")
 
     spark.stop()
 
