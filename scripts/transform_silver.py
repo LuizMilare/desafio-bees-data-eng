@@ -1,9 +1,12 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, when, lit
 from pyspark.sql.types import StructType, StructField, StringType
+
 import os
 import logging
 from datetime import datetime, timezone
+
+from scripts.spark_utils import get_spark
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,14 +25,7 @@ def process_silver(ingestion_date: str = None) -> None:
     logger.info(f"Starting transformation for ingestion_date={ingestion_date}")
     
     os.environ['HADOOP_HOME'] = os.path.abspath(os.getcwd())
-    spark = (
-        SparkSession.builder
-        .appName("BrewerySilver")
-        .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem")
-        .config("spark.driver.host", "127.0.0.1")
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
-        .getOrCreate()
-    )
+    spark = get_spark("BrewerySilver")
 
     spark.sparkContext.setLogLevel("ERROR")
 
