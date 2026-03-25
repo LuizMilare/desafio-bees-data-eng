@@ -1,23 +1,20 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
-import subprocess
-import sys
-from pytest import main as pytest_main
 
-def run_script(script_name):
-    result = subprocess.run([sys.executable, f"/app/scripts/{script_name}"], capture_output=True, text=True)
-    if result.returncode != 0:
-        raise Exception(f"Error at script {script_name}: {result.stderr}")
-    print(result.stdout)
+from scripts.transform_silver import process_silver
+from scripts.transform_gold import process_gold
+from scripts.ingest_breweries import fetch_breweries
 
-def on_failure_callback(context):
-    print(f"Alert! Task: {context['task_instance_key_str']}, scheduled for {context['execution_date']}, failed.")
 
 def run_integration_tests():
+    from pytest import main as pytest_main
     exit_code = pytest_main(["-v", "/opt/airflow/tests/test_pipeline.py"])
     if exit_code != 0:
         raise Exception("Integration tests failed. Check the logs for more details.")
+
+def on_failure_callback(context):
+    print(f"Alert! Task: {context['task_instance_key_str']}, scheduled for {context['execution_date']}, failed.")
 
 
 default_args = {
@@ -43,20 +40,19 @@ with DAG(
 
     task_ingest = PythonOperator(
         task_id='ingest_bronze',
-        python_callable=run_script,
-        op_args=['ingest_breweries.py']
+        python_callable=fetch_breweries,
     )
 
     task_silver = PythonOperator(
         task_id='transform_silver',
-        python_callable=run_script,
-        op_args=['transform_silver.py']
+        python_callable=process_silver,
+        op_kwargs={"ingestion_date": "{{ ds }}"}
     )
 
     task_gold = PythonOperator(
         task_id='transform_gold',
-        python_callable=run_script,
-        op_args=['transform_gold.py']
+        python_callable=process_gold,
+        op_kwargs={"ingestion_date": "{{ ds }}"}
     )
 
     task_tests = PythonOperator(

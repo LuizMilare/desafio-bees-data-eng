@@ -2,6 +2,7 @@ import os
 import json
 import pytest
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import count, col
 
 @pytest.fixture(scope="session")
 def spark():
@@ -27,9 +28,8 @@ def test_silver_parquet_exists():
 def test_silver_duplicates(spark):
     # Checks if the IDs are unique
     df = spark.read.parquet("/app/data/silver/breweries")
-    ids = df.select("id").distinct().count()
-    total = df.count()
-    assert ids == total
+    duplicates = df.groupBy("id", "ingestion_date").agg(count("id").alias("ocurrencies")).filter(col("ocurrencies") > 1)
+    assert duplicates.count() == 0
 
 def test_silver_schema(spark):
     # Verification of the existence of the main columns according to the API documentation
