@@ -43,10 +43,6 @@ def fetch_page(page):
     
     logger.error(f"Page {page} failed after {MAX_RETRIES} attempts. Skipping.")
     return None
-    base_url = BASE_URL
-    all_data = []
-    page = 1
-    items_per_page = 200
 
 def fetch_breweries():
     all_data = []
@@ -76,7 +72,7 @@ def fetch_breweries():
         logger.warning(f"Failed to fetch pages: {failed_pages}")
 
     if not all_data:
-        raise valueError("No data fetched. Ingestion failed.")
+        raise ValueError("No data fetched. Ingestion failed.")
 
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
@@ -86,7 +82,7 @@ def fetch_breweries():
     logger.info(f"Ingestion successful with {len(all_data)} records.")
 
     if failed_pages:
-        raise runtimeError(f"Ingestion completed with failures on pages: {failed_pages}")
+        raise RuntimeError(f"Ingestion completed with failures on pages: {failed_pages}")
 
 if __name__ == "__main__":
     fetch_breweries()
