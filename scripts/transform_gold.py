@@ -15,10 +15,8 @@ def process_gold():
                        .orderBy("brewery_count", ascending=False)
 
     # Salvando na Gold
-    df_gold.write.partitionBy("country").mode("overwrite").parquet("/app/data/gold/brewery_analytics")
-    
-    print("Resultado da Camada Gold:")
-    df_gold.show(10)
+    df_gold.write.mode("overwrite").parquet("/app/data/gold/brewery_analytics")
+        
     spark.stop()
 
 if __name__ == "__main__":

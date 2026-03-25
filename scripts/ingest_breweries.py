@@ -32,7 +32,7 @@ def fetch_breweries():
     with open("/app/data/bronze/breweries_raw.json", "w") as f:
         json.dump(all_data, f, indent=4)
 
-    print(f"Ingestão concluída com {len(all_data)} registros.")
+    print(f"Ingestion successful with {len(all_data)} records.")
 
 if __name__ == "__main__":
     fetch_breweries()

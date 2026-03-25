@@ -42,12 +42,9 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 *  **Goal:** Cleaning and optimization.
 
-*  **Transformations:** Conversion from `.json` to **Parquet** for columnar storage.
+*  **Transformations:** Define Schema. Deduplicate records by id. Treatment of null values for the `country` column. Conversion from `.json` to **Parquet** for columnar storage.
 
-*  **Partitioning:** Data was partitioned by location (`country`) to reduce Spark's I/O on regional queries..
-
-*  **Cleaning:** Treatment of null values for the `country` column.
-
+*  **Partitioning:** Data was partitioned by location (`country`) to reduce Spark's I/O on regional queries.
   
 
 ### 3. Gold Layer (Aggregated Data)
@@ -68,9 +65,9 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 To assure Data Quality, a suite of integration tests was implemented on **Pytest** acting directly on the Airflow DAG as a **Quality Gate**
 
-* The tests occur right after all tasks are completed. But can be adapted to execute after each task.
+* The tests occur right after all tasks are completed. But can be adapted to execute after each task which woul be more suitable for a production environment.
 
-*  **Tested Cases:** Existence of the bronze layer raw `.json` file; existence of data inside the `.json` file; existence of data within the silver layer; existence of main expected columns on the silver layer; existence of aggregation column on gold layer.
+*  **Tested Cases:** Existence of the bronze layer raw `.json` file; existence of data inside the `.json` file; existence of data within the silver layer; uniqueness check; existence of main expected columns on the silver layer; existence of aggregation column on gold layer.
 
 * If any test case fails, the test task fails and triggers an error, but the data is still loaded to the Data Lake, since the test task is the last to be executed.
 
