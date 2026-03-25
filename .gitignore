@@ -14,6 +14,7 @@ metastore_db/
 spark-warehouse/
 *.parquet
 *.json
+!grafana/dashboards/brewery_dashboard.json
 .vscode/
 .idea/
 .docker/

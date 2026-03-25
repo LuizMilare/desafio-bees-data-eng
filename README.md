@@ -166,9 +166,15 @@ docker-compose up -d --build
 
 * Check if the data was indeed recorded in \data folder
 
-  
+7. **Monitor DAGs Execution metrics on Grafana**
 
-7.  **Stop Application**
+* Open browser in http://localhost:3000
+
+* User: admin / Password: admin. (Skip if prompted to create new password)
+
+* Access Dashboards > Breweries dashboard  
+
+8.  **Stop Application**
 
 ```
 docker-compose down -v
