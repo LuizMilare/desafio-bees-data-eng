@@ -34,7 +34,7 @@ def process_gold(ingestion_date: str = None) -> None:
     
     # Agregação final
     df_gold = spark.sql(
-        f"""
+        """
         SELECT 
             brewery_type,
             country,
