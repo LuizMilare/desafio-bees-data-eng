@@ -2,10 +2,11 @@
 
 
 
-This project contains a scalable data pipeline to extract, transform and persist data from the **Open Brewery DB API** into a *Data Lake* using the *Medallion Architecture*
+This project contains a scalable data pipeline to extract, transform and persist data from the [Open Brewery DB API](https://www.openbrewerydb.org/) into a *Data Lake* using the *Medallion Architecture*
 
   
-  
+## Pipeline Diagram
+![Architecture Diagram](docs/Pipeline-diagram.png)
 
 ## Tools and Technologies
 
@@ -28,7 +29,7 @@ This project contains a scalable data pipeline to extract, transform and persist
 
   
 
-The *Data Lake* was structured in three layers, designed to ensure scalability and data quality. These three layers are persisted in local volumes mapped by Docker. In a production environment, these paths should be switched to a Object Storage such as S3 or GCS:
+The *Data Lake* was structured in three layers, designed to ensure scalability and data quality, while also maintaining idempotency. These three layers are persisted in local volumes mapped by Docker. In a production environment, these paths should be switched to an Object Storage such as S3 or GCS:
 
   
 
@@ -36,7 +37,7 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 *  **Goal:** Ingestion of data in its raw form.
 
-*  **Process:** Data is extracted from the API with pagination and persisted in `.json` format. The ingestion script uses retry logic and a defined timeout per request. Pages that fail are skipped and logged, and an error is raised to trigger Airflow alerts. This layer should work as the source of truth.
+*  **Process:** Data is extracted from the API with pagination, partitioned by ingestion date and persisted in `.json` format. The ingestion script uses retry logic and a defined timeout per request. Pages that fail are skipped and logged, and an error is raised to trigger Airflow alerts. This layer should work as the source of truth.
 
   
 
@@ -44,16 +45,16 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 *  **Goal:** Cleaning and optimization.
 
-*  **Transformations:** Define Schema. Deduplicate records by id. Treatment of null values for the `country` column. Conversion from `.json` to **Parquet** for columnar storage.
+*  **Transformations:** Define Schema. Read only bronze layer files from current ingestion date partition. Deduplicate records by id. Treatment of null values for the `country` column. Conversion from `.json` to **Parquet** for columnar storage.
 
-*  **Partitioning:** Data was partitioned by *location* and *ingestion_date* to ensure idempotency and auditability. The `country` partitioning reduces Spark's I/O for regional queries
+*  **Partitioning:** Data was partitioned by *location (country)* and *ingestion_date* to ensure idempotency and auditability. The `country` partitioning reduces Spark's I/O for regional queries
   
 
 ### 3. Gold Layer (Aggregated Data)
 
 *  **Goal:** Provide analytics data for business.
 
-*  **Process:** Create aggregated view with **number of breweries by type and location** using Spark SQL, partitioned by *ingestion_date*, ready to be used by BI tools or analytical reports.
+*  **Process:** Read only silver layer files from current ingestion date. Create aggregated view with **number of breweries by type and location** using Spark SQL, partitioned by *ingestion_date*, ready to be used by BI tools or analytical reports.
 
   
 
@@ -63,13 +64,14 @@ The *Data Lake* was structured in three layers, designed to ensure scalability a
 
 ## Data quality and Tests
 
-  
 
 To assure Data Quality, a suite of integration tests was implemented on **Pytest** acting directly on the Airflow DAG as a **Quality Gate**
 
 * The tests occur right after all tasks are completed. But can be adapted to execute after each task which woul be more suitable for a production environment.
 
 *  **Tested Cases:** Existence of the bronze layer raw `.json` file; existence of data inside the `.json` file; existence of data within the silver layer; uniqueness check; existence of main expected columns on the silver layer; existence of aggregation column on gold layer.
+
+* The test is applied only over files from current ingestion date.
 
 * If any test case fails, the test task fails and triggers an error, but the data is still loaded to the Data Lake, since the test task is the last to be executed.
 
@@ -81,7 +83,6 @@ To assure Data Quality, a suite of integration tests was implemented on **Pytest
 
 ## Alerts
 
-  
 
 In a production environment, the *pipeline* could be monitored as follows:
 
@@ -114,6 +115,8 @@ This project includes a **Grafana** instance with automated provisioning. The **
 *  **Local vs Cloud Storage:** Since it is not specified in the instructions, the *Data Lake* storage and processing was kept on local Docker volumes. In a real architecture, the storage could be migrated to cloud based solutions, such as AWS S3 and GCS, and the processing could be done in a databricks cluster.
 
 *  **Tests Within DAG:** The tests occur within the Airflow DAG instead of a CI/CD pipeline, assuring the data quality is assured on runtime.
+
+* **Full load vs Incremental load:** The pipeline performs a full load on every execution, reading and storing all data from the API, while also storing data from previous dates. This decision was made taking the dataset size into account, its behavior as a dimensional table, and also the fact that it lacks any change detection mechanism (created_at or updated_at for example).
 
   
 
@@ -187,3 +190,22 @@ docker-compose up -d --build
 ```
 docker-compose down -v
 ```
+## Demos
+Screenshots contain induced failures for demonstration
+
+### Airflow
+![Aiflow demo](docs/Airflow-demo.png)
+
+### Grafana
+![Grafana demo](docs/Grafana-demo.png)
+
+## Next steps
+The following topics are a suggestion for future development of this project, aiming for a production environment.
+
+* **Dedicated Spark cluster:** Decouple Spark from the Airflow containers for performance improvements and scalability.
+
+* **Cloud migration:** Replace local storage with cloud storage (GCS, S3 or equivalent).
+
+* **Alerting:** Replace the on_failure_callback with a real webhook notification and SMTP setup
+
+* **Data Contracts:** Introduce schema validation with [Great Expectations](https://greatexpectations.io/) on the Silver layer to catch upstream API changes early.
