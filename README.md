@@ -149,12 +149,15 @@ cd desafio-bees-data-eng
 3. **Set Environment Variables**
 
 * Rename .env_example file to .env
-* Set 
+* Set your prefered credentials
 ```
 POSTGRES_USER=airflow
 POSTGRES_PASSWORD=airflow
 POSTGRES_DB=airflow
 AIRFLOW_SECRET_KEY=any_key_you_like
+AIRFLOW_ADMIN_PASSWORD=admin
+AIRFLOW_ADMIN_EMAIL=admin@example.com
+GRAFANA_ADMIN_PASSWORD=admin
 ```
 
 4.  **Start the infrastructure**
