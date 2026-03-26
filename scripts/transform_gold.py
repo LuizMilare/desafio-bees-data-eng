@@ -30,7 +30,7 @@ def process_gold(ingestion_date: str = None) -> None:
     
     logger.info(f"Reading data from Silver layer partition: {silver_partition_path}")
     # Lendo da Silver
-    df_silver = spark.read.parquet(INPUT_PATH)
+    df_silver = spark.read.parquet(silver_partition_path)
 
     df_silver.createOrReplaceTempView("silver_breweries")
     
@@ -47,7 +47,7 @@ def process_gold(ingestion_date: str = None) -> None:
         GROUP BY brewery_type, country, state_province
         ORDER BY brewery_count DESC
         """
-    ).withColumn("ingestion_date", lit(ingestion_date)).filter(col("ingestion_date") == ingestion_date)
+    ).withColumn("ingestion_date", lit(ingestion_date))
 
     record_count = df_gold.count()
     logger.info(f"Gold transformation completed with {record_count} records.")
