@@ -7,8 +7,10 @@ from scripts.transform_gold import process_gold
 from scripts.ingest_breweries import fetch_breweries
 
 
-def run_integration_tests():
+def run_integration_tests(ingestion_date: str = None):
+    import os
     from pytest import main as pytest_main
+    os.environ["INGESTION_DATE"] = ingestion_date
     exit_code = pytest_main(["-v", "/opt/airflow/tests/test_pipeline.py"])
     if exit_code != 0:
         raise Exception("Integration tests failed. Check the logs for more details.")
@@ -24,7 +26,7 @@ default_args = {
     'start_date': datetime(2026, 3, 22),
     'email_on_failure': True,
     'email_on_retry': False,
-    'retries': 3,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
     'on_failure_callback': on_failure_callback
 }
@@ -41,6 +43,7 @@ with DAG(
     task_ingest = PythonOperator(
         task_id='ingest_bronze',
         python_callable=fetch_breweries,
+        op_kwargs={'ingestion_date': "{{ ds }}"}
     )
 
     task_silver = PythonOperator(
@@ -57,7 +60,8 @@ with DAG(
 
     task_tests = PythonOperator(
         task_id='run_integration_tests',
-        python_callable=run_integration_tests
+        python_callable=run_integration_tests,
+        op_kwargs={"ingestion_date": "{{ ds }}"}
     )
 
     task_ingest >> task_silver >> task_gold >> task_tests

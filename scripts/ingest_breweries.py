@@ -17,7 +17,7 @@ MAX_PAGES = 1000
 MAX_RETRIES = 3
 BACKOFF_FACTOR = 2
 TIMEOUT_SECONDS = 10
-OUTPUT_PATH = "/app/data/bronze/breweries_raw.json"
+OUTPUT_PATH = "/app/data/bronze"
 
 def fetch_page(page):
     for attempt in range(1, MAX_RETRIES + 1):
@@ -44,10 +44,11 @@ def fetch_page(page):
     logger.error(f"Page {page} failed after {MAX_RETRIES} attempts. Skipping.")
     return None
 
-def fetch_breweries():
+def fetch_breweries(ingestion_date: str = None) -> None:
     all_data = []
     failed_pages = []
     page = 1
+    path = f"{OUTPUT_PATH}/ingestion_date={ingestion_date}"
 
     logger.info("Starting brewery ingestion...")
 
@@ -75,8 +76,8 @@ def fetch_breweries():
         raise ValueError("No data fetched. Ingestion failed.")
 
 
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    with open(OUTPUT_PATH, "w") as f:
+    os.makedirs(os.path.dirname(f"{path}/breweries_raw.json"), exist_ok=True)
+    with open(f"{path}/breweries_raw.json", "w") as f:
         json.dump(all_data, f, indent=4)
 
     logger.info(f"Ingestion successful with {len(all_data)} records.")

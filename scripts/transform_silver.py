@@ -14,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-INPUT_PATH = "/app/data/bronze/breweries_raw.json"
+INPUT_PATH = "/app/data/bronze"
 OUTPUT_PATH = "/app/data/silver/breweries"
 
 def process_silver(ingestion_date: str = None) -> None:
@@ -47,6 +47,7 @@ def process_silver(ingestion_date: str = None) -> None:
     StructField("website_url", StringType(), True),
     StructField("state", StringType(), True),
     StructField("street", StringType(), True),
+    StructField("ingestion_date", StringType(), True)
     ])
 
     logger.info("Reading data from bronze layer..")
@@ -56,8 +57,11 @@ def process_silver(ingestion_date: str = None) -> None:
         spark.read
         .schema(schema)
         .option("multiline", "true")
-        .json("/app/data/bronze/breweries_raw.json")
-    )
+        .json(INPUT_PATH)
+    ).filter(col("ingestion_date") == ingestion_date)
+
+    record_count = df.count()
+    logger.info(f"Read {record_count} records from bronze layer.")
 
     # 3. Deduplicating
     df_deduped = df.dropDuplicates(["id"])
@@ -70,13 +74,10 @@ def process_silver(ingestion_date: str = None) -> None:
     # 5. Writing to Silver layer, partitioned by country - Partitioning can be changed in the future for performance improvements
     output_path = "/app/data/silver/breweries"
 
-    # 6. Add ingestion_date column for partitioning and future auditing
-    df_final = df_cleaned.withColumn("ingestion_date", lit(ingestion_date))
-
-    record_count = df_final.count()
+    record_count = df_cleaned.count()
     logger.info(f"Transformation completed with {record_count} records.")
 
-    df_final.write.partitionBy("country", "ingestion_date").mode("overwrite").parquet(OUTPUT_PATH)
+    df_cleaned.write.partitionBy("country", "ingestion_date").mode("overwrite").parquet(OUTPUT_PATH)
 
     logger.info(f"Silver layer completed at: {output_path}")
 

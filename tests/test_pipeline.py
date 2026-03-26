@@ -11,12 +11,14 @@ def spark():
 # Bronze layer tests
 def test_bronze_file_exists():
     # Checks for the existence of the raw file
-    assert os.path.exists("/app/data/bronze/breweries_raw.json")
+    ingestion_date = os.environ.get("INGESTION_DATE")
+    assert os.path.exists(f"/app/data/bronze/ingestion_date={ingestion_date}/breweries_raw.json")
 
 def test_json_is_not_empty():
     # Verifies that there is data in the raw JSON
     import json
-    with open("/app/data/bronze/breweries_raw.json", "r") as f:
+    ingestion_date = os.environ.get("INGESTION_DATE")
+    with open(f"/app/data/bronze/ingestion_date={ingestion_date}/breweries_raw.json", "r") as f:
         data = json.load(f)
         assert len(data) > 0
 

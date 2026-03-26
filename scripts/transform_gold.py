@@ -25,12 +25,10 @@ def process_gold(ingestion_date: str = None) -> None:
     spark = get_spark("BreweryGold")
 
     spark.sparkContext.setLogLevel("ERROR")
-
-    silver_partition_path = f"{INPUT_PATH}/*/ingestion_date={ingestion_date}"
     
-    logger.info(f"Reading data from Silver layer partition: {silver_partition_path}")
+    logger.info(f"Reading data from Silver layer partition: {INPUT_PATH}/ingestion_date={ingestion_date}")
     # Lendo da Silver
-    df_silver = spark.read.parquet(silver_partition_path)
+    df_silver = spark.read.parquet(INPUT_PATH).filter(col("ingestion_date") == ingestion_date)
 
     df_silver.createOrReplaceTempView("silver_breweries")
     
