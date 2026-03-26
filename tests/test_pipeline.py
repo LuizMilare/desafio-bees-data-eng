@@ -62,9 +62,8 @@ def test_gold_no_null_brewery_type(spark):
     df = spark.read.parquet("/app/data/gold/brewery_analytics")
     assert df.filter(col("brewery_type").isNull()).count() == 0
 
-def test_gold_has_data_for_today(spark):
-    from datetime import datetime, timezone
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+def test_gold_has_data_for_current_date(spark):
+    ingestion_date = os.environ.get("INGESTION_DATE")
     df = spark.read.parquet("/app/data/gold/brewery_analytics")
     count = df.filter(col("ingestion_date") == today).count()
     assert count > 0
